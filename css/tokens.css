@@ -1,0 +1,46 @@
+/* =========================================================
+   AU MICROSCOPII — токены дизайна
+   ========================================================= */
+
+:root {
+  /* цвет */
+  --ink: #e9f1fa;
+  --ink-2: rgba(233, 241, 250, .78);
+  --dim: rgba(198, 220, 240, .52);
+  --dim-2: rgba(160, 195, 225, .34);
+
+  --amber: #ffb457;
+  --amber-soft: rgba(255, 180, 87, .55);
+  --amber-glow: rgba(255, 180, 87, .16);
+  --cyan: #6fe3ff;
+  --cyan-soft: rgba(111, 227, 255, .45);
+  --green: #59ffb0;
+  --red: #ff6a4a;
+
+  --bg-0: #04070c;
+  --bg-1: #070d15;
+  --panel: rgba(8, 16, 26, .94);
+  --panel-2: rgba(6, 12, 20, .97);
+  --line: rgba(140, 200, 255, .14);
+  --line-2: rgba(140, 200, 255, .07);
+
+  /* типографика */
+  --font-ui: "Bahnschrift", "DIN Alternate", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, ui-monospace, monospace;
+
+  /* ритм */
+  --pad: clamp(16px, 3.2vw, 44px);
+  --gap: clamp(10px, 1.4vw, 18px);
+  --radius-cut: 10px;
+
+  /* время */
+  --t-fast: .18s;
+  --t: .32s;
+  --t-slow: .6s;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+
+  /* атмосфера */
+  --px: 0;
+  --py: 0;
+  --spin: 600s;
+}

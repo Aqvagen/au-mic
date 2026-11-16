@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>AU Microscopii · 2287</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/screens.css">
+<link rel="stylesheet" href="css/title.css">
+</head>
+<body>
+
+<div class="stage" id="stage">
+
+  <div class="bg" id="bg"><div class="bg__spin" id="bgSpin"></div></div>
+  <div class="scene" id="sceneA"></div>
+  <div class="scene" id="sceneB"></div>
+
+  <div class="core"></div>
+  <div class="flare"></div>
+  <canvas class="dust" id="dust"></canvas>
+  <div class="sweep"></div>
+  <div class="scrim"></div>
+  <div class="vignette"></div>
+  <div class="scanlines"></div>
+  <div class="grain"></div>
+
+  <header class="hud" id="hud">
+    <div class="brand">
+      <span class="brand__dot"></span>
+      <span>AU MIC</span>
+      <span class="brand__sep">/</span>
+      <span class="brand__sub" id="hudScene">R-7</span>
+    </div>
+
+    <div class="hud__where" id="hudWhere"></div>
+
+    <div class="hud__stats">
+      <span class="stat"><b>HP</b><span id="hudHp">0</span><i class="of" id="hudHpMax">/0</i></span>
+      <span class="stat"><b>LVL</b><span id="hudLvl">1</span></span>
+      <span class="stat"><b>XP</b><span class="xpbar"><i id="hudXpFill"></i></span><span id="hudXpText">0/0</span></span>
+      <span class="stat"><b>₡</b><span id="hudCredits">0</span></span>
+      <button class="btn btn--sm hidden" id="hudPoints" data-test="points">очки</button>
+      <button class="btn btn--sm" id="btnJournal" data-test="journal">Журнал</button>
+      <button class="btn btn--sm" id="btnBag" data-test="inv">Рюкзак</button>
+      <button class="btn btn--sm btn--ghost" id="btnPause">Пауза</button>
+    </div>
+  </header>
+
+  <main class="app" id="app"></main>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="veil"></div>
+
+  <audio id="amb" loop preload="none"></audio>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/data-quests.js"></script>
+<script src="js/data-dialogues.js"></script>
+<script src="js/logic.js"></script>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/screens-shell.js"></script>
+<script src="js/screens-talk.js"></script>
+<script src="js/screens-char.js"></script>
+<script src="js/screens-fight.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
