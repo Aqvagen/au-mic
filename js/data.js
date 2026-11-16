@@ -4,7 +4,7 @@
 (function (G) {
   'use strict';
   var D = {};
-  D.VERSION = '2.7';
+  D.VERSION = '2.9';
 
   D.ATTRS = {
     telo:    { name: 'ТЕЛО',     short: 'ТЕЛ' },

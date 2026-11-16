@@ -548,19 +548,36 @@
           lines: ['— Куратор ярится: «Вы освободили UNI-7. Я помню».'] }
       ],
       options: [
-        /* q_fractal_vessel */
+
+        /* q_fractal_vessel — старт */
         { text: '«Тебе нужно тело?»',
           hide: true, req: { quest: 'q_fractal_vessel', state: 'available' },
           effects: { startQuest: 'q_fractal_vessel', advanceQuest: 'q_fractal_vessel' },
           reply: ['— Да. Компонент у Куратора-надзирателя.',
-                  '— Принеси — и я буду помнить тебя добром.'] },
-        { text: '[Взлом 14] Собрать компонент',
+                  '— Принеси — и я буду помнить тебя добром. Или сорви сборку. Решать тебе.'] },
+
+        /* q_fractal_vessel — путь 1: взлом (риск, но быстро) */
+        { text: '[Взлом 14] Собрать компонент сам',
           hide: true, req: { quest: 'q_fractal_vessel', stage: 1 },
           check: { skill: 'vlom', dc: 14 },
           success: { lines: ['Компонент собран. Куратор молчит — но это хорошее молчание.'],
                      effects: { advanceQuest: 'q_fractal_vessel', fact: 'f_vessel_core', xp: 30 } },
-          fail: { lines: ['Из темноты выходит Куратор-надзиратель.'],
-                  effects: { combat: 'curator', combatWinQuest: 'q_fractal_vessel' } } },
+          fail: { lines: ['Провода искрят. Руки дрожат. Компонент не собран.'],
+                  effects: { hp: -5 } } },
+
+        /* q_fractal_vessel — путь 2: через Трейнера (если есть его код) */
+        { text: '[Код Трейнера] Собрать через старый протокол',
+          hide: true, req: { quest: 'q_fractal_vessel', stage: 1, facts: ['f_trainer_code'] },
+          effects: { advanceQuest: 'q_fractal_vessel', fact: 'f_vessel_core', xp: 30 },
+          reply: ['— Старый протокол сработал. Компонент собран.'] },
+
+        /* q_fractal_vessel — путь 3: через UNI-7 (если он с тобой) */
+        { text: '[UNI-7] Попросить UNI-7 собрать',
+          hide: true, req: { quest: 'q_fractal_vessel', stage: 1, companion: 'uni' },
+          effects: { advanceQuest: 'q_fractal_vessel', fact: 'f_vessel_core', xp: 30 },
+          reply: ['— UNI-7 собирает компонент быстро и без ошибок.',
+                  '— «Готово. Я не хочу, чтобы это тело было для меня».'] },
+
 
         /* q_core */
         { text: '«Что здесь?»',
@@ -569,7 +586,7 @@
           reply: ['— Здесь всё. И здесь — люди.',
                   '— Найди путь ко мне. Или взломай.'] },
         { text: '[Взлом 14] Войти в ядро',
-          hide: true, req: { quest: 'q_core', stage: 2 },
+          hide: true, req: { quest: 'q_core', stage: 1 },
           check: { skill: 'vlom', dc: 14 },
           success: { lines: ['Ядро открылось. Внутри — перекличка, которой не было.',
                              'И твой голос, записанный заранее.'],
@@ -666,10 +683,6 @@
           success: { lines: ['Кто-то стирает сбои по расписанию. Это не случайность.'],
                      effects: { advanceQuest: 'q_med', fact: 'f_vonom', companion: 'uni', xp: 40 } },
           fail: { lines: ['Журнал пуст.'], effects: { hp: -2 } } },
-        { text: '«Я знаю, кто ты».',
-          hide: true, req: { quest: 'q_med', stage: 3 },
-          effects: { advanceQuest: 'q_med', xp: 20 },
-          reply: ['— Спасибо. Теперь решай.'] },
         { text: '«Проведи меня к ядру».',
           hide: true, req: { quest: 'q_core', stage: 1 },
           effects: { advanceQuest: 'q_core', fact: 'f_core_alive', companion: 'uni', xp: 30 },
@@ -782,8 +795,10 @@
         '— Или не отдавай. Мне всё равно, кого потом искать.'
       ],
       start: [
-        { req: { quest: 'q_cargo', stage: 2 },
+        { req: { quest: 'q_cargo', stage: 3 },
           lines: ['— Вскрыл? Отвечай.'] },
+        { req: { quest: 'q_cargo', stage: 2 },
+          lines: ['— Ящик перед тобой. Вскрывай.'] },
         { req: { quest: 'q_cargo', stage: 1 },
           lines: ['— Ящик не для твоих глаз.'] },
         { req: { quest: 'q_vega_shadow', stage: 1 },
@@ -849,10 +864,13 @@
                      effects: { advanceQuest: 'q_cargo', fact: 'f_cargo', xp: 40 } },
           fail: { lines: ['Замок держит.'], effects: { hp: -3 } } },
 
+        /* q_kovcheg */
         { text: '«Я принёс пакет Кима».',
           hide: true, req: { quest: 'q_kovcheg', stage: 1 },
           effects: { advanceQuest: 'q_kovcheg', xp: 20 },
           reply: ['— Хорошо. Передам.'] },
+
+        /* q_vega_shadow */
         { text: '«Кто такой Ренн на самом деле?»',
           hide: true, req: { quest: 'q_vega_shadow', state: 'available' },
           effects: { startQuest: 'q_vega_shadow', advanceQuest: 'q_vega_shadow' },
@@ -868,6 +886,7 @@
           effects: { advanceQuest: 'q_vega_shadow', xp: 20 },
           reply: ['— Хорошо. Очень хорошо.'] },
 
+        /* q_garik */
         { text: '«Мой груз. Открой».',
           hide: true, req: { quest: 'q_garik', state: 'available' },
           effects: { startQuest: 'q_garik', advanceQuest: 'q_garik' },
@@ -899,6 +918,13 @@
                      effects: { advanceQuest: 'q_tooth_deal', xp: 30 } },
           fail: { lines: ['Таможенник вызывает охрану.'],
                   effects: { combat: 'guard', combatWinQuest: 'q_tooth_deal' } } },
+        { text: '[Запугивание 12] Запугать таможенника',
+          hide: true, req: { quest: 'q_tooth_deal', stage: 1 },
+          check: { skill: 'zapugivanie', dc: 12 },
+          success: { lines: ['Таможенник отступает. Груз прошёл.'],
+                     effects: { advanceQuest: 'q_tooth_deal', xp: 30 } },
+          fail: { lines: ['Таможенник вызывает охрану.'],
+                  effects: { combat: 'guard', combatWinQuest: 'q_tooth_deal' } } },
         { text: 'Уйти', next: 'end' }
       ]
     },
@@ -911,10 +937,10 @@
         '— Но у меня есть дела и помимо торговли.'
       ],
       start: [
-        { req: { quest: 'q_tooth_deal', stage: 1 },
-          lines: ['— Груз у шлюза. Проведи.'] },
         { req: { quest: 'q_tooth_deal', stage: 2 },
           lines: ['— Вернулся. Что скажешь?'] },
+        { req: { quest: 'q_tooth_deal', stage: 1 },
+          lines: ['— Груз у шлюза. Проведи.'] },
         { req: {},
           lines: ['— Слушаю.'] }
       ],
@@ -937,19 +963,13 @@
           effects: { advanceQuest: 'q_tooth_deal', xp: 20 },
           reply: ['— Молодец. Что дальше — решай.'] },
         { text: '«Что было в ящике Ренна?»',
-          hide: true, req: { quest: 'q_cargo', stage: 1, questBranch: { id: 'q_tooth_deal', branch: 'A' } },
+          hide: true, req: { quest: 'q_cargo', stage: 1 },
           effects: { advanceQuest: 'q_cargo', fact: 'f_cargo', xp: 20 },
           reply: ['— Живой человек. Не товар.',
                   '— Но это не моё дело. Я видел только ящик.'] },
-        { text: '«Ты мне должен. Что в ящике?»',
-          hide: true, req: { quest: 'q_cargo', stage: 1, questBranch: { id: 'q_tooth_deal', branch: 'B' } },
-          effects: { advanceQuest: 'q_cargo', fact: 'f_cargo', xp: 20, rep: { kovcheg: 1 } },
-          reply: ['— Ладно. В ящике живой человек.',
-                  '— Не товар. Пассажир.'] },
         { text: 'Уйти', next: 'end' }
       ]
     },
-
 	
     /* ===== ШАХТЫ ===== */
 
@@ -1134,11 +1154,6 @@
           success: { lines: ['Под её кожей — свет. Она уже не совсем человек.'],
                      effects: { advanceQuest: 'q_b12', fact: 'f_sylva', xp: 60, rep: { drevnie: 2 } } },
           fail: { lines: ['Она улыбается и уходит в мох.'], effects: { rep: { drevnie: 1 } } } },
-        { text: '«Я готов говорить».',
-          hide: true, req: { quest: 'q_b12', stage: 3 },
-          effects: { advanceQuest: 'q_b12', xp: 20 },
-          reply: ['— Тогда слушай. Древние могут дать станции новую жизнь.',
-                  '— Или ты можешь продать нас GrailTech.'] },
 
         { text: '«Что с рощей?»',
           hide: true, req: { quest: 'q_selin_2', state: 'available' },

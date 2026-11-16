@@ -293,21 +293,20 @@
     } else if (!st.started) {
       var reason = questLockReason(id);
       if (L.questAvailable(s, id)) {
-        var take = UI.el('button', 'btn btn--primary');
-        take.type = 'button';
-        take.setAttribute('data-test', 'queststart');
-        take.appendChild(UI.el('span', '', 'Взять дело'));
-        take.addEventListener('click', function () {
-          L.startQuest(s, id);
-          L.save(s, 'auto');
-          UI.toast('Взято дело: ' + q.title);
-          S.showQuest(id);
+        var go = UI.el('button', 'btn btn--primary');
+        go.type = 'button';
+        go.setAttribute('data-test', 'questgo');
+        go.appendChild(UI.el('span', '', '→ Где искать: ' + locName(q.where)));
+        go.addEventListener('click', function () {
+          ST.loc = q.where;
+          S.showLocation(q.where);
         });
-        wrap.appendChild(take);
+        wrap.appendChild(go);
+        wrap.appendChild(UI.el('div', 'hint', 'поговори с: ' + q.giver));
       } else {
         wrap.appendChild(UI.el('div', 'hint', reason || 'дело пока недоступно'));
       }
-      wrap.appendChild(UI.el('div', 'hint', 'где искать: ' + locName(q.where) + ' · ' + q.giver));
+      wrap.appendChild(UI.el('div', 'hint', 'дело берётся в разговоре, а не в журнале'));
     } else if (st.stage >= q.stages.length) {
       wrap.appendChild(UI.el('div', 'muted', 'ты дошёл до развилки — исход определит нить и награду'));
       var brs = UI.el('div', 'branches');
@@ -356,4 +355,5 @@
 
     root.appendChild(wrap);
   };
+
 })(window);

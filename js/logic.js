@@ -286,15 +286,15 @@
     if (req.facts && !req.facts.every(function (f) { return st.facts[f]; })) return false;
     if (req.item && st.bag.indexOf(req.item) < 0) return false;
     if (req.level && st.level < req.level) return false;
+    if (req.companion && st.companions.indexOf(req.companion) < 0) return false;
+    if (req.companionsAll && !req.companionsAll.every(function (c) { return st.companions.indexOf(c) >= 0; })) return false;
     if (req.rep) {
       for (var k in req.rep) if ((st.rep[k] || 0) < req.rep[k]) return false;
     }
-    /* NEW: закрыт конкретной веткой */
     if (req.questBranch) {
       var qb = st.quests[req.questBranch.id];
       if (!qb || !qb.done || qb.branch !== req.questBranch.branch) return false;
     }
-    /* NEW: конкретный квест провален */
     if (req.questFailed && !(st.quests[req.questFailed] && st.quests[req.questFailed].failed)) return false;
     if (req.quest) {
       var s = st.quests[req.quest], q = D.QUESTS[req.quest];
@@ -825,6 +825,7 @@
 
   L.serialize = function (st) { return JSON.stringify(st); };
 
+
   L.migrate = function (st) {
     if (!st) return st;
     st.v = 2;
@@ -847,11 +848,19 @@
       }
       if (s.failed === undefined) s.failed = false;
       if (s.branch === undefined) s.branch = null;
+      /* clamp: если старый stage больше нового числа этапов */
+      if (s.stage > D.QUESTS[id].stages.length) {
+        s.stage = D.QUESTS[id].stages.length;
+      }
     });
     Object.keys(st.usedChecks).forEach(function (k) {
       if (st.usedChecks[k] === true) st.usedChecks[k] = 'fail';
     });
-    /* Сброс диалоговых флагов при смене версии диалогов */
+    /* фикс: q_gt_audit завис на stage 0 при started */
+    if (st.quests.q_gt_audit && st.quests.q_gt_audit.started && st.quests.q_gt_audit.stage === 0) {
+      st.quests.q_gt_audit.stage = 1;
+    }
+    /* Сброс диалоговых флагов при смене версии */
     if (st.dlgv !== D.VERSION) {
       st.usedChecks = {};
       Object.keys(st.flags).forEach(function (k) {
