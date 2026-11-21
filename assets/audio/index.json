@@ -1,0 +1,36 @@
+{
+  "tracks": [
+    {
+      "name": "Celestial Collision",
+      "src": "Celestial Collision.mp3"
+    },
+    {
+      "name": "Cosmic1",
+      "src": "Cosmic1.mp3"
+    },
+    {
+      "name": "Cosmic3 (1)",
+      "src": "Cosmic3 (1).mp3"
+    },
+    {
+      "name": "Cosmic5 (Remix)",
+      "src": "Cosmic5 (Remix).mp3"
+    },
+    {
+      "name": "Cosmic5",
+      "src": "Cosmic5.mp3"
+    },
+    {
+      "name": "Cosmic_spok",
+      "src": "Cosmic_spok.mp3"
+    },
+    {
+      "name": "R-7 · фон",
+      "src": "ambient.mp3"
+    },
+    {
+      "name": "Бой",
+      "src": "combat.mp3"
+    }
+  ]
+}
