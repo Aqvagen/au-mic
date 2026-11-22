@@ -49,41 +49,53 @@ UI.setWhere = function (text) {
 var n = UI.$('hudWhere');
 if (n) n.textContent = text || '';
 };
+
 UI.updateHud = function (S, L, D) {
-if (!S) return;
-function set(id, v) { var n = UI.$(id); if (n) n.textContent = v; }
-set('hudHp', Math.max(0, S.hp));
-set('hudHpMax', '/' + S.maxHp);
-set('hudLvl', S.level);
-set('hudCredits', S.credits);
-var next = L.xpForNext(S);
-var pct = isFinite(next) && next > 0 ? Math.min(100, Math.round(S.xp / next * 100)) : 100;
-var fill = UI.$('hudXpFill');
-if (fill) fill.style.width = pct + '%';
-set('hudXpText', isFinite(next) ? S.xp + '/' + next : 'max');
-var pts = UI.$('hudPoints');
-if (pts) {
-pts.classList.toggle('hidden', !(S.points > 0));
-if (S.points > 0) pts.textContent = 'очки: ' + S.points;
-}
+  if (!S) return;
+  function set(id, v) { var n = UI.$(id); if (n) n.textContent = v; }
+  set('hudHp', Math.max(0, S.hp));
+  set('hudHpMax', '/' + S.maxHp);
+  set('hudLvl', S.level);
+  set('hudCredits', S.credits);
+  var next = L.xpForNext(S);
+  var pct = isFinite(next) && next > 0 ? Math.min(100, Math.round(S.xp / next * 100)) : 100;
+  var fill = UI.$('hudXpFill');
+  if (fill) fill.style.width = pct + '%';
+  set('hudXpText', isFinite(next) ? S.xp + '/' + next : 'max');
+  var badge = UI.$('bagBadge'), bagBtn = UI.$('btnBag');
+  var pts = S.points || 0;
+  if (badge) {
+    badge.textContent = String(pts);
+    badge.classList.toggle('hidden', pts === 0);
+  }
+  if (bagBtn) {
+    bagBtn.classList.toggle('has-points', pts > 0);
+    bagBtn.title = pts > 0
+      ? 'Снаряжение и развитие · свободных очков: ' + pts
+      : 'Снаряжение и развитие';
+  }
 };
 
 /* ---------- титульный слой ---------- */
 UI.clearTitleLayer = function () {
-var l = document.querySelector('.title-layer');
-if (l) {
-if (l._timer) clearInterval(l._timer);
-if (l.parentNode) l.parentNode.removeChild(l);
-}
-var h = UI.$('hud');
-if (h) h.classList.remove('is-title');
+  var l = document.querySelector('.title-layer');
+  if (l) {
+    if (l._timer) clearInterval(l._timer);
+    if (l.parentNode) l.parentNode.removeChild(l);
+  }
+  var h = UI.$('hud');
+  if (h) h.classList.remove('is-title');
+  var st = UI.$('stage');
+  if (st) st.classList.remove('is-title');
 };
 UI.showTitleLayer = function (node) {
-UI.clearTitleLayer();
-UI.$('stage').appendChild(node);
-var h = UI.$('hud');
-if (h) h.classList.add('is-title');
-return node;
+  UI.clearTitleLayer();
+  UI.$('stage').appendChild(node);
+  var h = UI.$('hud');
+  if (h) h.classList.add('is-title');
+  var st = UI.$('stage');
+  if (st) st.classList.add('is-title');
+  return node;
 };
 
 /* ---------- монтаж экранов ---------- */

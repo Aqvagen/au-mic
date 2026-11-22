@@ -3,15 +3,20 @@
 сейвы, режимы «без анимаций» / «крупный шрифт» / «без подсказок»
 ========================================================= */
 
-/* ---------- аудио в HUD (видно всегда, даже на титуле) ---------- */
-.hud__audio { display: inline-flex; align-items: center; gap: 6px; }
+/* ---------- аудио-остров: одно место на титуле и в игре ---------- */
+.stage { --audio-top: calc(var(--pad) * .5 + 26px); }
+.audio-island {
+  position: absolute;
+  top: var(--audio-top);
+  left: var(--pad);
+  right: auto;
+  z-index: 22;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .hud__btns { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.hud.is-min { opacity: 1; transform: none; }
-.hud.is-min .brand,
-.hud.is-min .hud__where,
-.hud.is-min .hud__stats > :not(.hud__audio) { display: none; }
-.hud.is-min.is-title .hud__audio { margin-top: 30px; }
-@media (max-width: 900px) { .hud.is-min.is-title .hud__audio { margin-top: 46px; } }
+.hud.is-min { opacity: 0; transform: translateY(-8px); pointer-events: none; }
 
 #btnMusic { min-width: 52px; }
 #btnMusic.is-playing { color: var(--amber); border-left-color: var(--amber); }
@@ -21,13 +26,39 @@
 #btnMusic.is-playing .mbtn__eq i { opacity: 1; animation: eqBar .9s ease-in-out infinite; }
 #btnMusic.is-playing .mbtn__eq i:nth-child(2) { animation-delay: .18s; }
 #btnMusic.is-playing .mbtn__eq i:nth-child(3) { animation-delay: .36s; }
-@keyframes eqBar { 0%,100% { height: 3px; } 50% { height: 10px; } }
+@keyframes eqBar { 0%, 100% { height: 3px; } 50% { height: 10px; } }
+
+/* ---------- бейдж очков на «Рюкзаке» ---------- */
+.btn--bag { position: relative; }
+.pt-badge {
+  display: inline-grid; place-items: center;
+  min-width: 15px; height: 15px; padding: 0 4px;
+  border-radius: 8px;
+  background: var(--amber); color: #1a1206;
+  font-family: var(--font-mono); font-size: 9px; font-style: normal;
+  letter-spacing: 0; line-height: 1;
+}
+.btn--bag.has-points { border-left-color: var(--amber); color: var(--amber-soft); }
+.btn--bag.has-points .pt-badge { animation: ptPulse 2.2s ease-in-out infinite; }
+@keyframes ptPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 180, 87, .5); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 180, 87, 0); }
+}
+@media (max-width: 860px) {
+  .audio-island {
+    top: auto;
+    bottom: calc(var(--pad) * .6);
+    left: var(--pad);
+  }
+}
+
 
 /* ---------- плеер ---------- */
 .mplayer {
   position: absolute;
-  top: calc(var(--pad) * 1.55);
-  right: var(--pad);
+  top: calc(var(--audio-top) + 38px);
+  left: var(--pad);
+  right: auto;
   z-index: 30;
   width: 344px;
   max-width: calc(100vw - var(--pad) * 2);
@@ -90,7 +121,8 @@
 .mplayer__foot .btn { padding: 5px 10px; font-size: 10px; }
 .mplayer__note { flex: 1 1 100%; font-size: 9px; letter-spacing: .1em; color: var(--dim-2); line-height: 1.5; }
 @media (max-width: 700px) {
-  .mplayer { top: calc(var(--pad) * 2.6); left: var(--pad); right: var(--pad); width: auto; }
+  .mplayer {   top: auto;  bottom: calc(var(--pad) * .6 + 40px); left: var(--pad); right: var(--pad); width: auto; }
+  
 }
 
 /* ---------- сейвы ---------- */

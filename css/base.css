@@ -52,26 +52,30 @@ background-repeat: no-repeat;
 @keyframes spin { to { transform: rotate(360deg); } }
 .stage.mode-scene .bg { opacity: 0; pointer-events: none; }
 /* ---------- фон: сцена локации ---------- */
+
 .scene {
-position: absolute;
-inset: 0;
-z-index: 0;
-opacity: 0;
-transition: opacity var(--t-slow) var(--ease);
-background-size: cover;
-background-position: 50% 55%;
-filter: saturate(.62) contrast(1.06) brightness(.82);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity var(--t-slow) var(--ease);
+  background-size: cover;
+  background-position: 50% 38%;
+  background-repeat: no-repeat;
+  filter: saturate(.72) contrast(1.04) brightness(.9);
 }
 .scene.is-on { opacity: 1; }
 .stage.mode-scene .scene.is-on { opacity: 1; }
 .scene::after {
-content: "";
-position: absolute;
-inset: 0;
-background:
-linear-gradient(180deg, rgba(4, 7, 12, .92) 0%, rgba(4, 7, 12, .35) 22%, rgba(4, 7, 12, .55) 68%, rgba(4, 7, 12, .96) 100%),
-linear-gradient(90deg, rgba(4, 7, 12, .8) 0%, rgba(4, 7, 12, .1) 30%, rgba(4, 7, 12, .1) 70%, rgba(4, 7, 12, .8) 100%);
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(4, 7, 12, .86) 0%, rgba(4, 7, 12, .22) 30%, rgba(4, 7, 12, .30) 64%, rgba(4, 7, 12, .90) 100%),
+    linear-gradient(90deg, rgba(4, 7, 12, .66) 0%, rgba(4, 7, 12, .04) 36%, rgba(4, 7, 12, .04) 64%, rgba(4, 7, 12, .66) 100%);
 }
+
+
 /* ---------- атмосфера ---------- */
 .flare, .core, .dust, .sweep, .scrim, .vignette, .scanlines, .grain {
 position: absolute;
@@ -131,11 +135,13 @@ linear-gradient(90deg, rgba(4, 7, 12, .93) 0%, rgba(4, 7, 12, .72) 18%, rgba(4, 
 linear-gradient(180deg, rgba(4, 7, 12, .92) 0%, rgba(4, 7, 12, .25) 16%, transparent 32%),
 linear-gradient(0deg, rgba(4, 7, 12, .94) 0%, rgba(4, 7, 12, .35) 18%, transparent 34%);
 }
+
 .stage.mode-scene .scrim {
-background:
-linear-gradient(180deg, rgba(4, 7, 12, .92) 0%, rgba(4, 7, 12, .3) 16%, transparent 34%),
-linear-gradient(0deg, rgba(4, 7, 12, .94) 0%, rgba(4, 7, 12, .4) 20%, transparent 38%);
+  background:
+    linear-gradient(180deg, rgba(4, 7, 12, .80) 0%, rgba(4, 7, 12, .16) 20%, transparent 40%),
+    linear-gradient(0deg, rgba(4, 7, 12, .88) 0%, rgba(4, 7, 12, .26) 22%, transparent 44%);
 }
+
 .vignette {
 inset: 0;
 z-index: 5;
@@ -261,14 +267,15 @@ transition: width var(--t-slow) var(--ease);
 }
 /* ---------- площадь экрана ---------- */
 .app {
-position: absolute;
-inset: 0;
-z-index: 12;
-display: flex;
-flex-direction: column;
-padding: calc(var(--pad) * 1.9) var(--pad) calc(var(--pad) * 1.2);
-overflow: hidden;
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--pad) * 2.7) var(--pad) calc(var(--pad) * 1.2);
+  overflow: hidden;
 }
+
 .screen {
 flex: 1 1 auto;
 min-height: 0;

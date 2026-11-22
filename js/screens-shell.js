@@ -440,6 +440,7 @@ function proseBlock(l, s) {
   return box;
 }
 
+/* ================= локация: люди слева, дела справа ================= */
 S.showLocation = function (id) {
   var s = ST.S;
   ST.loc = id;
@@ -455,9 +456,14 @@ S.showLocation = function (id) {
   var onMap = !!MAP_ROOMS[l.id];
   root.appendChild(pageHead('Локация', l.name, l.desc,
     onMap ? [S.btn('← На карту', 'back', function () { S.showHub(); }, 'btn--ghost')] : null));
+
+  var layout = UI.el('div', 'loc-layout');
+  var mainCol = UI.el('div', 'loc-main');
   var prose = proseBlock(l, s);
-  if (prose) root.appendChild(prose);
+  if (prose) mainCol.appendChild(prose);
+
   var grid = UI.el('div', 'entries');
+  var railQuests = [];
   var i = 0;
   locationEntries(l).forEach(function (e) {
     if (e.indexOf('dlg_') === 0) {
@@ -487,23 +493,71 @@ S.showLocation = function (id) {
       var q = D.QUESTS[e];
       if (!q) return;
       if (q.hero && q.hero !== s.hero) return;
-      var st = s.quests[e];
-      if (!st) return;
-      var finalEntry = (e === 'q_final' && !st.done);
-      if (!st.started && !st.done && !st.failed && !L.questAvailable(s, e) && !finalEntry) return;
-      var kind = st.done ? 'завершено'
-        : st.failed ? 'провал'
-        : st.stage >= q.stages.length ? 'решение'
-        : st.started ? 'дело · этап ' + (st.stage + 1) + '/' + q.stages.length
-        : finalEntry ? 'нужно 3 дела акта II'
-        : 'доступно';
-      grid.appendChild(entry(q.title, kind, 'quest_' + e,
-        function () { S.showQuest(e); }, i++, st.done));
+      var stq = s.quests[e];
+      if (!stq) return;
+      railQuests.push({ id: e, q: q, st: stq });
     }
   });
   if (!grid.childNodes.length) grid.appendChild(UI.el('div', 'empty', 'здесь пока нечего делать'));
-  root.appendChild(grid);
+  mainCol.appendChild(grid);
+  layout.appendChild(mainCol);
+  layout.appendChild(buildQuestRail(l, railQuests, s));
+  root.appendChild(layout);
 };
+
+function buildQuestRail(l, list, s) {
+  var rail = UI.el('div', 'loc-rail');
+  var card = UI.el('div', 'side-card');
+  var ready = [], work = [], fresh = 0;
+  list.forEach(function (x) {
+    if (x.st.done || x.st.failed) return;
+    if (x.st.started) {
+      if (x.st.stage >= x.q.stages.length) ready.push(x); else work.push(x);
+    } else if (L.questAvailable(s, x.id)) fresh++;
+    else if (x.id === 'q_final') fresh++;
+  });
+  var head = UI.el('div', 'side-card__title', 'Дела здесь');
+  card.appendChild(head);
+  if (!ready.length && !work.length) {
+    card.appendChild(UI.el('div', 'hint', 'в работе ничего нет'));
+  }
+  function qrow(x, isReady) {
+    var b = UI.el('button', 'qrail' + (isReady ? ' qrail--ready' : ''));
+    b.type = 'button';
+    b.setAttribute('data-test', 'rail_' + x.id);
+    var m = UI.el('div', 'qrail__m');
+    m.appendChild(UI.el('div', 'qrail__t', x.q.title));
+    var sub = isReady
+      ? 'все этапы пройдены · выбери исход'
+      : 'этап ' + (x.st.stage + 1) + '/' + x.q.stages.length + ' · ' + x.q.stages[x.st.stage];
+    m.appendChild(UI.el('div', 'qrail__s', sub));
+    b.appendChild(m);
+    b.appendChild(UI.el('span', 'qrail__b', isReady ? 'решение' : '→'));
+    b.addEventListener('click', function () { S.showQuest(x.id); });
+    return b;
+  }
+  ready.forEach(function (x) { card.appendChild(qrow(x, true)); });
+  work.forEach(function (x) { card.appendChild(qrow(x, false)); });
+  if (fresh) {
+    card.appendChild(UI.el('div', 'qrail__fresh',
+      'новых дел здесь: ' + fresh + ' — спроси у людей'));
+  }
+  rail.appendChild(card);
+
+  var sum = UI.el('div', 'side-card');
+  sum.appendChild(UI.el('div', 'side-card__title', 'Сводка'));
+  var kv = UI.el('div', 'kv');
+  [['в работе', work.length], ['к решению', ready.length],
+   ['всего закрыто', L.questsDone(s)], ['проверки', s.passed + '/' + s.checks]].forEach(function (x) {
+    kv.appendChild(UI.el('dt', '', x[0]));
+    kv.appendChild(UI.el('dd', '', String(x[1])));
+  });
+  sum.appendChild(kv);
+  sum.appendChild(UI.el('div', 'hint', 'полный список — в журнале'));
+  rail.appendChild(sum);
+  return rail;
+}
+
 function entry(title, kind, test, fn, i, done, mod) {
   var b = UI.el('button', 'entry' + (done ? ' entry--done' : '') + (mod ? ' ' + mod : ''));
   b.type = 'button';

@@ -274,7 +274,7 @@ D.MUSIC = [
 D.SETTINGS = {
 volume: 0.35, mute: false, track: 'ambient',
 motion: true, scan: true,
-bigFont: false, hideHints: false, autosave: true
+bigFont: false, hideHints: false, autosave: true, telemetry: true
 };
 G.D = D;
 if (typeof module !== 'undefined' && module.exports) module.exports = D;

@@ -244,46 +244,82 @@ tipEl.style.top = Math.max(8, y) + 'px';
 document.addEventListener('pointerdown', tipHide, true);
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tipHide(); }, true);
 
-/* ================= рюкзак / персонаж ================= */
-S.showInventory = function (fresh) {
-tipHide();
-var s = st();
-s.gear = s.gear || {};
-if (fresh !== false && !sel) {
-var c = carry();
-var heal = null;
-if (s.hp < s.maxHp) {
-for (var i = 0; i < c.length; i++) { var dd = def(c[i]); if (dd && dd.heal) { heal = c[i]; break; } }
-}
-sel = heal || c[0] || null;
-}
-if (sel && !has(sel)) sel = carry()[0] || null;
-armedDrop = null;
+/* ================= персонаж: снаряжение + развитие ================= */
+var invTab = 'gear', invScroll = 0;
 
-var p = UI.panel({
-kicker: 'Персонаж', title: D.HEROES[s.hero].name, wide: true,
-footLeft: 'Esc — закрыть', footRight: 'ЛКМ — выбрать · 2×ЛКМ — надеть/использовать'
-});
+S.showInventory = function (opt) {
+  tipHide();
+  var s = st();
+  s.gear = s.gear || {};
+  var prevTab = invTab;
+  if (opt === 'gear' || opt === 'grow') invTab = opt;
+  if (opt !== false && !sel) {
+    var c = carry();
+    var heal = null;
+    if (s.hp < s.maxHp) {
+      for (var i = 0; i < c.length; i++) { var dd = def(c[i]); if (dd && dd.heal) { heal = c[i]; break; } }
+    }
+    sel = heal || c[0] || null;
+  }
+  if (sel && !has(sel)) sel = carry()[0] || null;
+  armedDrop = null;
 
-var stats = UI.el('div', 'statgrid');
-var w = D.WEAPONS[s.weapon], ar = D.ARMORS[s.armor];
-[['HP', s.hp + ' / ' + s.maxHp, 'живучесть'],
-['УРОН', String(w.dmg + L.heroDamageBonus(s)), w.name],
-['ЗАЩИТА', String(L.defense(s)), ar.name + ' · −' + (ar.dr || 0) + ' урона'],
-['КРЕДИТЫ', String(s.credits), 'на счету']].forEach(function (x) {
-var b = UI.el('div', 'statbox');
-b.appendChild(UI.el('div', 'statbox__v', x[1]));
-b.appendChild(UI.el('div', 'statbox__l', x[0] + ' · ' + x[2]));
-stats.appendChild(b);
-});
-p._body.appendChild(stats);
+  var oldBody = document.querySelector('#panel .panel__body');
+  if (oldBody && prevTab === invTab) invScroll = oldBody.scrollTop;
+  if (prevTab !== invTab) invScroll = 0;
 
-var inv = UI.el('div', 'inv');
-inv.appendChild(buildLeft());
-inv.appendChild(buildRight());
-p._body.appendChild(inv);
-UI.openPanel(p);
+  var p = UI.panel({
+    kicker: 'Персонаж', title: D.HEROES[s.hero].name, wide: true,
+    footLeft: 'Esc — закрыть',
+    footRight: invTab === 'gear' ? 'ЛКМ — выбрать · 2×ЛКМ — надеть/использовать' : 'свободных очков: ' + s.points
+  });
+
+  var tabs = UI.el('div', 'tabs');
+  [['gear', 'Снаряжение', carry().length + '/' + BAG],
+   ['grow', 'Развитие', String(s.points)]].forEach(function (t) {
+    var b = UI.el('button', 'tab' + (invTab === t[0] ? ' on' : ''));
+    b.type = 'button';
+    b.setAttribute('data-test', 'invtab_' + t[0]);
+    b.appendChild(document.createTextNode(t[1] + ' '));
+    b.appendChild(UI.el('span', '', t[2]));
+    b.addEventListener('click', function () {
+      if (invTab === t[0]) return;
+      S.showInventory(t[0]);
+    });
+    tabs.appendChild(b);
+  });
+  p._body.appendChild(tabs);
+
+  if (invTab === 'gear') {
+    p._body.appendChild(buildStats());
+    var inv = UI.el('div', 'inv');
+    inv.appendChild(buildLeft());
+    inv.appendChild(buildRight());
+    p._body.appendChild(inv);
+  } else {
+    p._body.appendChild(buildGrow());
+  }
+
+  UI.openPanel(p);
+  p._body.scrollTop = invScroll;
 };
+
+function buildStats() {
+  var s = st();
+  var stats = UI.el('div', 'statgrid');
+  var w = D.WEAPONS[s.weapon], ar = D.ARMORS[s.armor];
+  [['HP', s.hp + ' / ' + s.maxHp, 'живучесть'],
+  ['УРОН', String(w.dmg + L.heroDamageBonus(s)), w.name],
+  ['ЗАЩИТА', String(L.defense(s)), ar.name + ' · −' + (ar.dr || 0) + ' урона'],
+  ['КРЕДИТЫ', String(s.credits), 'на счету']].forEach(function (x) {
+    var b = UI.el('div', 'statbox');
+    b.appendChild(UI.el('div', 'statbox__v', x[1]));
+    b.appendChild(UI.el('div', 'statbox__l', x[0] + ' · ' + x[2]));
+    stats.appendChild(b);
+  });
+  return stats;
+}
+
 
 function buildLeft() {
 var s = st();
@@ -491,97 +527,94 @@ card.appendChild(acts);
 return card;
 }
 
-/* ================= уровень ================= */
-S.showLevelUp = function () {
-tipHide();
-var s = st();
-var p = UI.panel({
-kicker: 'Развитие', title: 'Повышение уровня', wide: true,
-footRight: 'очков: ' + s.points
-});
-var box = UI.el('div', 'lvl');
-box.appendChild(UI.el('div', 'hint', s.points > 0
-? 'очко тратится на атрибут, навык или перк · атрибуты тянут за собой все свои навыки'
-: 'очков нет — закрывай дела и выигрывай бои'));
+/* ================= развитие: вкладка персонажа ================= */
+S.showLevelUp = function () { S.showInventory('grow'); };
 
-var attrs = UI.el('div', 'statgrid');
-var ATTR_DESC = { telo: 'HP, Драка, Стрельба, Запугивание', um: 'Логика, Взлом', harizma: 'Убеждение, Интуиция' };
-Object.keys(D.ATTRS).forEach(function (a) {
-var b = UI.el('div', 'statbox');
-b.appendChild(UI.el('div', 'statbox__v', String(s.attrs[a])));
-b.appendChild(UI.el('div', 'statbox__l', D.ATTRS[a].name + ' · ' + ATTR_DESC[a]));
-var btn = UI.el('button', 'btn btn--sm btn--primary', s.attrs[a] >= 12 ? 'предел' : '+ очко');
-btn.type = 'button';
-btn.disabled = s.points <= 0 || s.attrs[a] >= 12;
-btn.setAttribute('data-test', 'attr_' + a);
-btn.addEventListener('click', function () {
-if (L.spendPoint(st(), 'attr', a)) { UI.toast(D.ATTRS[a].name + ' → ' + st().attrs[a]); S.showLevelUp(); }
-else UI.toast('не хватает очков или предел');
-});
-b.appendChild(btn);
-attrs.appendChild(b);
-});
-box.appendChild(attrs);
+function buildGrow() {
+  var s = st();
+  var box = UI.el('div', 'lvl');
+  box.appendChild(UI.el('div', 'hint', s.points > 0
+    ? 'очко тратится на атрибут, навык или перк · атрибуты тянут за собой все свои навыки'
+    : 'очков нет — закрывай дела и выигрывай бои · лист персонажа доступен всегда'));
 
-var secS = UI.el('div', 'sec');
-secS.appendChild(UI.el('span', '', 'Навыки'));
-secS.appendChild(UI.el('span', '', 'ранг + атрибут + перки + напарники'));
-box.appendChild(secS);
-var sg = UI.el('div', 'skills');
-Object.keys(D.SKILLS).forEach(function (k) {
-var row = UI.el('div', 'skill');
-var nm = UI.el('span', 'skill__name', D.SKILLS[k].name + ' ');
-nm.appendChild(UI.el('em', '', D.ATTRS[D.SKILLS[k].attr].short));
-row.appendChild(nm);
-row.appendChild(UI.el('span', 'skill__val', String(L.skill(s, k))));
-var b = UI.el('button', 'btn btn--sm', (s.skills[k] || 0) >= 6 ? 'предел' : '+');
-b.type = 'button';
-b.disabled = s.points <= 0 || (s.skills[k] || 0) >= 6;
-b.setAttribute('data-test', 'skill_' + k);
-b.title = 'ранг ' + (s.skills[k] || 0) + ' из 6 · итоговый бонус ' + L.skill(s, k);
-b.addEventListener('click', function () {
-if (L.spendPoint(st(), 'skill', k)) { UI.toast(D.SKILLS[k].name + ' → ранг ' + st().skills[k]); S.showLevelUp(); }
-else UI.toast('не хватает очков или предел');
-});
-row.appendChild(b);
-sg.appendChild(row);
-});
-box.appendChild(sg);
+  var attrs = UI.el('div', 'statgrid');
+  var ATTR_DESC = { telo: 'HP, Драка, Стрельба, Запугивание', um: 'Логика, Взлом', harizma: 'Убеждение, Интуиция' };
+  Object.keys(D.ATTRS).forEach(function (a) {
+    var b = UI.el('div', 'statbox');
+    b.appendChild(UI.el('div', 'statbox__v', String(s.attrs[a])));
+    b.appendChild(UI.el('div', 'statbox__l', D.ATTRS[a].name + ' · ' + ATTR_DESC[a]));
+    var btn = UI.el('button', 'btn btn--sm btn--primary', s.attrs[a] >= 12 ? 'предел' : '+ очко');
+    btn.type = 'button';
+    btn.disabled = s.points <= 0 || s.attrs[a] >= 12;
+    btn.setAttribute('data-test', 'attr_' + a);
+    btn.addEventListener('click', function () {
+      if (L.spendPoint(st(), 'attr', a)) { UI.toast(D.ATTRS[a].name + ' → ' + st().attrs[a]); S.showInventory(false); }
+      else UI.toast('не хватает очков или предел');
+    });
+    b.appendChild(btn);
+    attrs.appendChild(b);
+  });
+  box.appendChild(attrs);
 
-var secP = UI.el('div', 'sec');
-secP.appendChild(UI.el('span', '', 'Перки'));
-secP.appendChild(UI.el('span', '', s.perks.length + ' взято'));
-box.appendChild(secP);
-var listEl = UI.el('div', 'list');
-Object.keys(D.PERKS).forEach(function (id, i) {
-var pk = D.PERKS[id];
-var has = s.perks.indexOf(id) >= 0;
-var avail = L.perkAvailable(s, id);
-var row = UI.el('div', 'lrow' + (has ? ' lrow--done' : ''));
-row.style.setProperty('--i', i);
-var main = UI.el('div', 'lrow__main');
-main.appendChild(UI.el('div', 'lrow__t', pk.name));
-var req = Object.keys(pk.req || {}).map(function (k) {
-var nm = D.ATTRS[k] ? D.ATTRS[k].name : D.SKILLS[k] ? D.SKILLS[k].name : k;
-return nm + ' ' + pk.req[k];
-}).join(' · ');
-main.appendChild(UI.el('div', 'lrow__s', pk.desc + (req ? ' · нужно: ' + req : '')));
-row.appendChild(main);
-var b = UI.el('button', 'btn btn--sm' + (avail && !has && s.points > 0 ? ' btn--primary' : ''),
-has ? 'взят' : avail ? 'Взять' : 'нет условий');
-b.type = 'button';
-b.disabled = !avail || has || s.points <= 0;
-b.setAttribute('data-test', 'perk_' + id);
-b.addEventListener('click', function () {
-if (L.spendPoint(st(), 'perk', id)) { UI.toast('Перк: ' + pk.name); S.showLevelUp(); }
-});
-row.appendChild(b);
-listEl.appendChild(row);
-});
-box.appendChild(listEl);
-p._body.appendChild(box);
-UI.openPanel(p);
-};
+  var secS = UI.el('div', 'sec');
+  secS.appendChild(UI.el('span', '', 'Навыки'));
+  secS.appendChild(UI.el('span', '', 'ранг + атрибут + перки + напарники'));
+  box.appendChild(secS);
+  var sg = UI.el('div', 'skills');
+  Object.keys(D.SKILLS).forEach(function (k) {
+    var row = UI.el('div', 'skill');
+    var nm = UI.el('span', 'skill__name', D.SKILLS[k].name + ' ');
+    nm.appendChild(UI.el('em', '', D.ATTRS[D.SKILLS[k].attr].short));
+    row.appendChild(nm);
+    row.appendChild(UI.el('span', 'skill__val', String(L.skill(s, k))));
+    var b = UI.el('button', 'btn btn--sm', (s.skills[k] || 0) >= 6 ? 'предел' : '+');
+    b.type = 'button';
+    b.disabled = s.points <= 0 || (s.skills[k] || 0) >= 6;
+    b.setAttribute('data-test', 'skill_' + k);
+    b.title = 'ранг ' + (s.skills[k] || 0) + ' из 6 · итоговый бонус ' + L.skill(s, k);
+    b.addEventListener('click', function () {
+      if (L.spendPoint(st(), 'skill', k)) { UI.toast(D.SKILLS[k].name + ' → ранг ' + st().skills[k]); S.showInventory(false); }
+      else UI.toast('не хватает очков или предел');
+    });
+    row.appendChild(b);
+    sg.appendChild(row);
+  });
+  box.appendChild(sg);
+
+  var secP = UI.el('div', 'sec');
+  secP.appendChild(UI.el('span', '', 'Перки'));
+  secP.appendChild(UI.el('span', '', s.perks.length + ' взято'));
+  box.appendChild(secP);
+  var listEl = UI.el('div', 'list');
+  Object.keys(D.PERKS).forEach(function (id, i) {
+    var pk = D.PERKS[id];
+    var has = s.perks.indexOf(id) >= 0;
+    var avail = L.perkAvailable(s, id);
+    var row = UI.el('div', 'lrow' + (has ? ' lrow--done' : ''));
+    row.style.setProperty('--i', i);
+    var main = UI.el('div', 'lrow__main');
+    main.appendChild(UI.el('div', 'lrow__t', pk.name));
+    var req = Object.keys(pk.req || {}).map(function (k) {
+      var nm = D.ATTRS[k] ? D.ATTRS[k].name : D.SKILLS[k] ? D.SKILLS[k].name : k;
+      return nm + ' ' + pk.req[k];
+    }).join(' · ');
+    main.appendChild(UI.el('div', 'lrow__s', pk.desc + (req ? ' · нужно: ' + req : '')));
+    row.appendChild(main);
+    var b = UI.el('button', 'btn btn--sm' + (avail && !has && s.points > 0 ? ' btn--primary' : ''),
+      has ? 'взят' : avail ? 'Взять' : 'нет условий');
+    b.type = 'button';
+    b.disabled = !avail || has || s.points <= 0;
+    b.setAttribute('data-test', 'perk_' + id);
+    b.addEventListener('click', function () {
+      if (L.spendPoint(st(), 'perk', id)) { UI.toast('Перк: ' + pk.name); S.showInventory(false); }
+    });
+    row.appendChild(b);
+    listEl.appendChild(row);
+  });
+  box.appendChild(listEl);
+  return box;
+}
+
 
 /* ================= журнал ================= */
 function journalData() {

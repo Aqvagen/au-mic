@@ -120,6 +120,7 @@ UI.setBigFont(settings.bigFont);
 document.body.classList.toggle('hide-hints', !!settings.hideHints);
 UI.player.setVolume(settings.volume);
 UI.player.setMute(settings.mute);
+  if (G.Tel) G.Tel.setEnabled(settings.telemetry !== false);
 }
 AU.getSettings = function () { return Object.assign({}, settings); };
 AU.setSetting = function (k, v) {
@@ -250,8 +251,48 @@ toggle(gfx, 'Скан-линии', 'scan');
 var ui = group('Интерфейс');
 toggle(ui, 'Крупный шрифт', 'bigFont');
 toggle(ui, 'Подсказки', 'hideHints', 'инверсия: вкл = скрыть');
+
 var game = group('Игра');
 toggle(game, 'Автосохранение', 'autosave');
+toggle(game, 'Сбор статистики', 'telemetry', 'локально, ничего не отправляется');
+
+var diag = group('Диагностика');
+var drow = UI.el('div', 'set-row');
+drow.appendChild(UI.el('span', 'set-row__l', 'Журнал событий и производительности'));
+var dbtns = UI.el('div', 'slot__acts');
+function dbtn(label, cls, fn) {
+  var b = UI.el('button', 'btn btn--sm' + (cls ? ' ' + cls : ''), label);
+  b.type = 'button';
+  b.addEventListener('click', fn);
+  return b;
+}
+dbtns.appendChild(dbtn('Сводка', '', function () {
+  if (!G.Tel) { UI.toast('Телеметрия не подключена'); return; }
+  G.Tel.summary().then(function (s) {
+    UI.closePanel();
+    var sp = UI.panel({ kicker: 'Диагностика', title: 'Сводка', wide: true, footRight: 'локальные данные' });
+    var pre = UI.el('pre', 'cx-note');
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.maxHeight = '58vh';
+    pre.style.overflow = 'auto';
+    pre.textContent = JSON.stringify(s, null, 2);
+    sp._body.appendChild(pre);
+    UI.openPanel(sp);
+  });
+}));
+dbtns.appendChild(dbtn('Выгрузить JSON', 'btn--primary', function () {
+  if (!G.Tel) { UI.toast('Телеметрия не подключена'); return; }
+  G.Tel.exportJSON().then(function (n) { UI.toast('Выгружено событий: ' + n); });
+}));
+dbtns.appendChild(dbtn('Очистить', 'btn--danger', function () {
+  if (!G.Tel) return;
+  G.Tel.clear().then(function () { UI.toast('Журнал очищен'); });
+}));
+drow.appendChild(dbtns);
+diag.appendChild(drow);
+diag.appendChild(UI.el('div', 'hint',
+  'данные лежат только в этом браузере · IP не собирается · отправка наружу выключена'));
+
 var reset = UI.el('button', 'btn btn--sm btn--danger', 'Сбросить настройки');
 reset.type = 'button';
 reset.addEventListener('click', function () {
@@ -421,6 +462,14 @@ UI.openPanel(p);
 
 /* ================= клавиатура ================= */
 document.addEventListener('keydown', function (e) {
+  /* быстрый сейв: Ctrl+S — в автослот, без выхода в меню */
+  if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+    e.preventDefault();
+    if (!ST.S) return;
+    if (ST.S.combat) { UI.toast('В бою сохранение недоступно'); return; }
+    UI.toast(rawSave(ST.S, 'auto') ? 'Сохранено в автослот' : 'Не удалось сохранить');
+    return;
+  }	
 var tag = (e.target && e.target.tagName || '').toLowerCase();
 if (tag === 'input' || tag === 'textarea' || tag === 'select') {
 if (e.key === 'Escape') e.target.blur();
@@ -468,19 +517,17 @@ if (b && !b.disabled) b.click();
 });
 
 /* ================= HUD ================= */
+
 function wireHud() {
-function on(id, fn) { var n = UI.$(id); if (n) n.addEventListener('click', fn); }
-on('btnJournal', function () { if (ST.S) S.showJournal(); });
-on('btnBag', function () { if (ST.S) S.showInventory(); });
-on('btnPause', function () { if (ST.S) AU.showPause(); });
-on('btnSave', function () { AU.showSave(); });
-on('btnLoad', function () { AU.showLoad(); });
-on('btnMusic', function () { UI.player.toggle(); });
-on('btnMute', function () { UI.player.setMute(!UI.player.isMuted()); });
-on('hudPoints', function () { if (ST.S) S.showLevelUp(); });
-var pts = UI.$('hudPoints');
-if (pts) pts.addEventListener('keydown', function (e) { if (e.key === 'Enter' && ST.S) S.showLevelUp(); });
+  function on(id, fn) { var n = UI.$(id); if (n) n.addEventListener('click', fn); }
+  on('btnJournal', function () { if (ST.S) S.showJournal(); });
+  on('btnBag', function () { if (ST.S) S.showInventory(); });
+  on('btnPause', function () { if (ST.S) AU.showPause(); });
+  on('btnCodex', function () { if (ST.S) S.showCodex(); });
+  on('btnMusic', function () { UI.player.toggle(); });
+  on('btnMute', function () { UI.player.setMute(!UI.player.isMuted()); });
 }
+
 
 /* ================= самотест ================= */
 var TR = [];

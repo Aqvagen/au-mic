@@ -61,25 +61,25 @@
       <span class="stat"><b>LVL</b><span id="hudLvl">1</span></span>
       <span class="stat"><b>XP</b><span class="xpbar"><i id="hudXpFill" style="width:0%"></i></span><i id="hudXpText">0/0</i></span>
       <span class="stat"><b>₡</b><span id="hudCredits">0</span></span>
-      <span class="pill pill--amber hidden" id="hudPoints" role="button" tabindex="0">очки</span>
-      <span class="hud__audio">
-        <button class="btn btn--sm btn--ghost" id="btnMusic" type="button" title="Плеер" aria-label="Плеер">
-          <span class="mbtn__eq" aria-hidden="true"><i></i><i></i><i></i></span><span>♫</span>
-        </button>
-        <button class="btn btn--sm btn--ghost" id="btnMute" type="button" title="Звук вкл/выкл (M)">ЗВУК</button>
-      </span>
       <span class="hud__btns">
-        <button class="btn btn--sm btn--codex" id="btnCodex" type="button" data-test="codex" title="GrailOS · справочник (/)">
+        <button class="btn btn--sm btn--codex" id="btnCodex" type="button" data-test="codex" title="GrailOS · справочник">
           <span>GrailOS</span><i class="cx-badge hidden" id="cxBadge">0</i>
         </button>
-        <button class="btn btn--sm" id="btnSave" type="button" data-test="save">Сохранить</button>
-        <button class="btn btn--sm" id="btnLoad" type="button" data-test="load">Загрузить</button>
         <button class="btn btn--sm" id="btnJournal" type="button" data-test="journal">Журнал</button>
-        <button class="btn btn--sm" id="btnBag" type="button" data-test="bag">Рюкзак</button>
+        <button class="btn btn--sm btn--bag" id="btnBag" type="button" data-test="bag" title="Снаряжение и развитие">
+          <span>Рюкзак</span><i class="pt-badge hidden" id="bagBadge">0</i>
+        </button>
         <button class="btn btn--sm btn--primary" id="btnPause" type="button" data-test="pause">Пауза</button>
       </span>
     </div>
   </header>
+
+  <div class="audio-island" id="audioIsland">
+    <button class="btn btn--sm btn--ghost" id="btnMusic" type="button" title="Плеер" aria-label="Плеер">
+      <span class="mbtn__eq" aria-hidden="true"><i></i><i></i><i></i></span><span>♫</span>
+    </button>
+    <button class="btn btn--sm btn--ghost" id="btnMute" type="button" title="Звук вкл/выкл (M)">ЗВУК</button>
+  </div>
 
   <main class="app" id="app"></main>
   <div class="overlay" id="overlay"></div>
@@ -102,6 +102,7 @@
 <script src="js/screens-char.js"></script>
 <script src="js/screens-fight.js"></script>
 <script src="js/screens-codex.js"></script>
+<script src="js/telemetry.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
