@@ -28,6 +28,8 @@
 <link rel="stylesheet" href="css/screens.css">
 <link rel="stylesheet" href="css/title.css">
 <link rel="stylesheet" href="css/ui-plus.css">
+<link rel="stylesheet" href="css/codex.css">
+<link rel="stylesheet" href="css/arrival.css">
 </head>
 <body>
 <div class="stage" id="stage">
@@ -67,6 +69,9 @@
         <button class="btn btn--sm btn--ghost" id="btnMute" type="button" title="Звук вкл/выкл (M)">ЗВУК</button>
       </span>
       <span class="hud__btns">
+        <button class="btn btn--sm btn--codex" id="btnCodex" type="button" data-test="codex" title="GrailOS · справочник (/)">
+          <span>GrailOS</span><i class="cx-badge hidden" id="cxBadge">0</i>
+        </button>
         <button class="btn btn--sm" id="btnSave" type="button" data-test="save">Сохранить</button>
         <button class="btn btn--sm" id="btnLoad" type="button" data-test="load">Загрузить</button>
         <button class="btn btn--sm" id="btnJournal" type="button" data-test="journal">Журнал</button>
@@ -87,6 +92,8 @@
 <script src="js/data.js"></script>
 <script src="js/data-quests.js"></script>
 <script src="js/data-dialogues.js"></script>
+<script src="js/data-arrival.js"></script>
+<script src="js/data-codex.js"></script>
 <script src="js/logic.js"></script>
 <script src="js/core.js"></script>
 <script src="js/ui.js"></script>
@@ -94,6 +101,7 @@
 <script src="js/screens-talk.js"></script>
 <script src="js/screens-char.js"></script>
 <script src="js/screens-fight.js"></script>
+<script src="js/screens-codex.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

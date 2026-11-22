@@ -178,7 +178,21 @@ stats.appendChild(sp);
 body.appendChild(stats);
 body.appendChild(UI.el('div', 'hero__go', 'Выбрать →'));
 card.appendChild(body);
-card.addEventListener('click', function () { ST.S = L.create(id); S.showHub(); });
+
+   card.addEventListener('click', function () {
+     ST.S = L.create(id);
+     /* прибытие: идентификатор ещё не выдан, интерфейс не поднят */
+     ST.S.flags.mask_active = false;
+     if (D.QUESTS.q_arrival) L.startQuest(ST.S, 'q_arrival');
+     if (D.LOCATIONS.some(function (x) { return x.id === 'loc_arrival'; })) {
+       ST.loc = 'loc_arrival';
+       S.showLocation('loc_arrival');
+     } else {
+       ST.S.flags.mask_active = true;
+       S.showHub();
+     }
+   });
+
 grid.appendChild(card);
 });
 root.appendChild(grid);
@@ -390,65 +404,118 @@ side.appendChild(leg);
 return side;
 }
 /* ================= локация ================= */
-S.showLocation = function (id) {
-var s = ST.S;
-ST.loc = id;
-s.location = id;
-var l = D.LOCATIONS.filter(function (x) { return x.id === id; })[0];
-if (!l) return;
-UI.setScene(l.bg);
-UI.setHudVisible(true);
-UI.updateHud(s, L, D);
-UI.setWhere(l.name);
-var root = mount('loc');
-root.appendChild(pageHead('Локация', l.name, l.desc,
-[S.btn('← На карту', 'back', function () { S.showHub(); }, 'btn--ghost')]));
-var grid = UI.el('div', 'entries');
-var i = 0;
-locationEntries(l).forEach(function (e) {
-if (e.indexOf('dlg_') === 0) {
-var d = D.DIALOGUES[e];
-if (!d) return;
-grid.appendChild(entry('Поговорить: ' + d.speaker, 'диалог', 'dlg_' + i,
-function () { S.openDialogue(e); }, i++));
-} else if (e.indexOf('trade_') === 0) {
-var mid = e.replace('trade_', '');
-if (!D.MERCHANTS[mid]) return;
-grid.appendChild(entry('Торговец: ' + D.MERCHANTS[mid].name, 'торговля', 'trade_' + i,
-function () { S.showTrade(mid); }, i++));
-} else if (e.indexOf('q_') === 0) {
-var q = D.QUESTS[e];
-if (!q) return;
-if (q.hero && q.hero !== s.hero) return;
-var st = s.quests[e];
-if (!st) return;
-var finalEntry = (e === 'q_final' && !st.done);
-if (!st.started && !st.done && !st.failed && !L.questAvailable(s, e) && !finalEntry) return;
-var kind = st.done ? 'завершено'
-: st.failed ? 'провал'
-: st.stage >= q.stages.length ? 'решение'
-: st.started ? 'дело · этап ' + (st.stage + 1) + '/' + q.stages.length
-: finalEntry ? 'нужно 3 дела акта II'
-: 'доступно';
-grid.appendChild(entry(q.title, kind, 'quest_' + e,
-function () { S.showQuest(e); }, i++, st.done));
+function proseBlock(l, s) {
+  var hero = s.hero;
+  var lines = l.intro && l.intro[hero];
+  if (!lines || !lines.length) return null;
+  var key = 'prose_seen_' + l.id;
+  var closed = !!s.flags[key];
+  var box = UI.el('div', 'prose' + (closed ? ' is-closed' : ''));
+  var head = UI.el('div', 'prose__head');
+  head.appendChild(UI.el('div', 'prose__kick',
+    (l.introTitle && l.introTitle[hero]) || 'СЦЕНА'));
+  var tg = UI.el('button', 'prose__toggle', closed ? 'Развернуть' : 'Свернуть');
+  tg.type = 'button';
+  tg.setAttribute('data-test', 'prose_toggle');
+  tg.addEventListener('click', function () {
+    var nowClosed = !box.classList.contains('is-closed');
+    box.classList.toggle('is-closed', nowClosed);
+    tg.textContent = nowClosed ? 'Развернуть' : 'Свернуть';
+    if (nowClosed) s.flags[key] = true; else delete s.flags[key];
+    L.save(s, 'auto');
+  });
+  head.appendChild(tg);
+  box.appendChild(head);
+  var body = UI.el('div', 'prose__body');
+  lines.forEach(function (t, i) {
+    var p = UI.el('p', 'prose__p', t);
+    p.style.setProperty('--i', i);
+    body.appendChild(p);
+  });
+  body.appendChild(UI.el('div', 'prose__stamp', 'GRAILTECH / СЛУЖБА РЕГИСТРАЦИИ'));
+  box.appendChild(body);
+  box.appendChild(UI.el('div', 'prose__note',
+    'справа — информационный терминал GrailOS · за стойкой — сотрудник регистрации'));
+  if (!closed) s.flags[key] = true;
+  return box;
 }
-});
-if (!grid.childNodes.length) grid.appendChild(UI.el('div', 'empty', 'здесь пока нечего делать'));
-root.appendChild(grid);
+
+S.showLocation = function (id) {
+  var s = ST.S;
+  ST.loc = id;
+  s.location = id;
+  var l = D.LOCATIONS.filter(function (x) { return x.id === id; })[0];
+  if (!l) return;
+  UI.setScene(l.bg);
+  UI.setHudVisible(true);
+  UI.updateHud(s, L, D);
+  UI.setWhere(l.name);
+  if (G.Codex) G.Codex.sync();
+  var root = mount('loc');
+  var onMap = !!MAP_ROOMS[l.id];
+  root.appendChild(pageHead('Локация', l.name, l.desc,
+    onMap ? [S.btn('← На карту', 'back', function () { S.showHub(); }, 'btn--ghost')] : null));
+  var prose = proseBlock(l, s);
+  if (prose) root.appendChild(prose);
+  var grid = UI.el('div', 'entries');
+  var i = 0;
+  locationEntries(l).forEach(function (e) {
+    if (e.indexOf('dlg_') === 0) {
+      var d = D.DIALOGUES[e];
+      if (!d) return;
+      grid.appendChild(entry('Поговорить: ' + d.speaker, 'диалог', 'dlg_' + i,
+        function () { S.openDialogue(e); }, i++));
+    } else if (e === 'wiki_terminal') {
+      grid.appendChild(entry('Терминал GrailOS', 'справочник станции', 'wiki_' + i,
+        function () { S.showCodex(); }, i++, false, 'entry--wiki'));
+    } else if (e.indexOf('exit_') === 0) {
+      var ready = !D.QUESTS.q_arrival || (s.quests.q_arrival && s.quests.q_arrival.done);
+      grid.appendChild(entry(
+        ready ? 'Дверь за стойкой → «Кокон»' : 'Дверь за стойкой',
+        ready ? 'переход на карту станции' : 'завершите регистрацию',
+        'exit_' + i,
+        function () {
+          if (!ready) { UI.toast('Сначала завершите регистрацию и ознакомьтесь с GrailOS'); return; }
+          S.showHub();
+        }, i++, false, ready ? 'entry--exit' : 'entry--locked'));
+    } else if (e.indexOf('trade_') === 0) {
+      var mid = e.replace('trade_', '');
+      if (!D.MERCHANTS[mid]) return;
+      grid.appendChild(entry('Торговец: ' + D.MERCHANTS[mid].name, 'торговля', 'trade_' + i,
+        function () { S.showTrade(mid); }, i++));
+    } else if (e.indexOf('q_') === 0) {
+      var q = D.QUESTS[e];
+      if (!q) return;
+      if (q.hero && q.hero !== s.hero) return;
+      var st = s.quests[e];
+      if (!st) return;
+      var finalEntry = (e === 'q_final' && !st.done);
+      if (!st.started && !st.done && !st.failed && !L.questAvailable(s, e) && !finalEntry) return;
+      var kind = st.done ? 'завершено'
+        : st.failed ? 'провал'
+        : st.stage >= q.stages.length ? 'решение'
+        : st.started ? 'дело · этап ' + (st.stage + 1) + '/' + q.stages.length
+        : finalEntry ? 'нужно 3 дела акта II'
+        : 'доступно';
+      grid.appendChild(entry(q.title, kind, 'quest_' + e,
+        function () { S.showQuest(e); }, i++, st.done));
+    }
+  });
+  if (!grid.childNodes.length) grid.appendChild(UI.el('div', 'empty', 'здесь пока нечего делать'));
+  root.appendChild(grid);
 };
-function entry(title, kind, test, fn, i, done) {
-var b = UI.el('button', 'entry' + (done ? ' entry--done' : ''));
-b.type = 'button';
-b.style.setProperty('--i', i);
-if (test) b.setAttribute('data-test', test);
-var main = UI.el('div', 'entry__main');
-main.appendChild(UI.el('div', 'entry__kind', kind));
-main.appendChild(UI.el('div', 'entry__title', title));
-b.appendChild(main);
-b.appendChild(UI.el('div', 'entry__go', '→'));
-b.addEventListener('click', fn);
-return b;
+function entry(title, kind, test, fn, i, done, mod) {
+  var b = UI.el('button', 'entry' + (done ? ' entry--done' : '') + (mod ? ' ' + mod : ''));
+  b.type = 'button';
+  b.style.setProperty('--i', i);
+  if (test) b.setAttribute('data-test', test);
+  var main = UI.el('div', 'entry__main');
+  main.appendChild(UI.el('div', 'entry__kind', kind));
+  main.appendChild(UI.el('div', 'entry__title', title));
+  b.appendChild(main);
+  b.appendChild(UI.el('div', 'entry__go', '→'));
+  b.addEventListener('click', fn);
+  return b;
 }
 S.entry = entry;
 S.pageHead = pageHead;

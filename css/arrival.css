@@ -1,0 +1,116 @@
+/* =========================================================
+Зона прибытия: проза сцены, штамп службы, переход в «Кокон»
+========================================================= */
+.prose {
+  display: grid;
+  gap: 10px;
+  max-width: 900px;
+  padding: 16px 20px 18px;
+  border: 1px solid var(--line-2);
+  border-left: 2px solid var(--amber);
+  background:
+    linear-gradient(180deg, rgba(9, 18, 30, .88), rgba(5, 10, 18, .93)),
+    radial-gradient(120% 80% at 0% 0%, rgba(255, 180, 87, .07), transparent 60%);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+  animation: rowIn var(--t-slow) var(--ease);
+}
+.prose__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.prose__kick {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--amber-soft);
+}
+.prose__toggle {
+  padding: 4px 10px;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--dim);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.prose__toggle:hover { color: var(--amber); border-color: rgba(255, 180, 87, .35); }
+.prose__body {
+  display: grid;
+  gap: 9px;
+  max-height: 42vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 180, 87, .3) rgba(111, 227, 255, .05);
+}
+.prose__body::-webkit-scrollbar { width: 6px; }
+.prose__body::-webkit-scrollbar-track { background: rgba(111, 227, 255, .05); }
+.prose__body::-webkit-scrollbar-thumb { background: rgba(255, 180, 87, .3); }
+.prose__body::-webkit-scrollbar-thumb:hover { background: var(--amber); }
+.prose.is-closed .prose__body { display: none; }
+.prose__p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.72;
+  color: var(--ink-2);
+  animation: lineIn .34s var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+.prose__p:first-child { color: #fff; font-size: 15.5px; }
+.prose__stamp {
+  margin-top: 2px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 180, 87, .3);
+  border-left: 2px solid var(--amber);
+  background: rgba(255, 180, 87, .06);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.prose__note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  line-height: 1.6;
+  color: var(--dim-2);
+}
+.entry--exit { border-left-color: var(--green); }
+.entry--exit .entry__kind { color: var(--green); }
+.entry--exit:hover { border-left-color: var(--green); border-color: rgba(89, 255, 176, .35); }
+.entry--locked { opacity: .5; border-left-color: rgba(255, 106, 74, .45); }
+.entry--locked .entry__kind { color: #ff9d7a; }
+.entry--wiki { border-left-color: rgba(111, 227, 255, .55); }
+.entry--wiki .entry__kind { color: var(--cyan); }
+
+.quest__desc {
+  margin: 0;
+  padding: 12px 15px;
+  border-left: 2px solid rgba(111, 227, 255, .4);
+  background: rgba(111, 227, 255, .04);
+  font-size: 13.5px;
+  line-height: 1.68;
+  color: var(--ink-2);
+}
+.quest__done { display: grid; gap: 8px; }
+.quest__done p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.68;
+  color: var(--ink-2);
+}
+.quest__done p:first-child { color: #fff; }
+
+@media (max-width: 860px) {
+  .prose { padding: 13px 14px 15px; }
+  .prose__body { max-height: 36vh; }
+  .prose__p { font-size: 13.5px; }
+}

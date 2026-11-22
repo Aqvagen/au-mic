@@ -280,39 +280,46 @@ if (leaders.indexOf(st.anchors[i].thread) >= 0) return st.anchors[i].thread;
 return leaders[0];
 };
 /* ================= ТРЕБОВАНИЯ ================= */
+
 L.reqMet = function (st, req) {
-if (!req) return true;
-if (req.hero && st.hero !== req.hero) return false;
-if (req.fact && !st.facts[req.fact]) return false;
-if (req.facts && !req.facts.every(function (f) { return st.facts[f]; })) return false;
-if (req.item && !L.hasItem(st, req.item)) return false;
-if (req.level && st.level < req.level) return false;
-if (req.companion && st.companions.indexOf(req.companion) < 0) return false;
-if (req.companionsAll && !req.companionsAll.every(function (c) { return st.companions.indexOf(c) >= 0; })) return false;
-if (req.rep) {
-for (var k in req.rep) if ((st.rep[k] || 0) < req.rep[k]) return false;
-}
-if (req.questBranch) {
-var qb = st.quests[req.questBranch.id];
-if (!qb || !qb.done || qb.branch !== req.questBranch.branch) return false;
-}
-if (req.questFailed && !(st.quests[req.questFailed] && st.quests[req.questFailed].failed)) return false;
-if (req.quest) {
-var s = st.quests[req.quest], q = D.QUESTS[req.quest];
-if (!s || !q) return false;
-var state = req.state || 'active';
-if (state === 'available' && !L.questAvailable(st, req.quest)) return false;
-if (state === 'notStarted' && (s.started || s.done || s.failed)) return false;
-if (state === 'active' && (!s.started || s.done || s.failed)) return false;
-if (state === 'ready' && !(s.started && !s.done && s.stage >= q.stages.length)) return false;
-if (state === 'done' && !s.done) return false;
-if (state === 'failed' && !s.failed) return false;
-if (req.stage !== undefined && s.stage !== req.stage) return false;
-if (req.stageMin !== undefined && s.stage < req.stageMin) return false;
-if (req.stageMax !== undefined && s.stage > req.stageMax) return false;
-}
-return true;
+  if (!req) return true;
+  if (req.hero && st.hero !== req.hero) return false;
+  var fl = st.flags || {};
+  if (req.flag && !fl[req.flag]) return false;
+  if (req.flags && !req.flags.every(function (f) { return fl[f]; })) return false;
+  if (req.notFlag && fl[req.notFlag]) return false;
+  if (req.notFlags && req.notFlags.some(function (f) { return fl[f]; })) return false;
+  if (req.fact && !st.facts[req.fact]) return false;
+  if (req.facts && !req.facts.every(function (f) { return st.facts[f]; })) return false;
+  if (req.item && !L.hasItem(st, req.item)) return false;
+  if (req.level && st.level < req.level) return false;
+  if (req.companion && st.companions.indexOf(req.companion) < 0) return false;
+  if (req.companionsAll && !req.companionsAll.every(function (c) { return st.companions.indexOf(c) >= 0; })) return false;
+  if (req.rep) {
+    for (var k in req.rep) if ((st.rep[k] || 0) < req.rep[k]) return false;
+  }
+  if (req.questBranch) {
+    var qb = st.quests[req.questBranch.id];
+    if (!qb || !qb.done || qb.branch !== req.questBranch.branch) return false;
+  }
+  if (req.questFailed && !(st.quests[req.questFailed] && st.quests[req.questFailed].failed)) return false;
+  if (req.quest) {
+    var s = st.quests[req.quest], q = D.QUESTS[req.quest];
+    if (!s || !q) return false;
+    var state = req.state || 'active';
+    if (state === 'available' && !L.questAvailable(st, req.quest)) return false;
+    if (state === 'notStarted' && (s.started || s.done || s.failed)) return false;
+    if (state === 'active' && (!s.started || s.done || s.failed)) return false;
+    if (state === 'ready' && !(s.started && !s.done && s.stage >= q.stages.length)) return false;
+    if (state === 'done' && !s.done) return false;
+    if (state === 'failed' && !s.failed) return false;
+    if (req.stage !== undefined && s.stage !== req.stage) return false;
+    if (req.stageMin !== undefined && s.stage < req.stageMin) return false;
+    if (req.stageMax !== undefined && s.stage > req.stageMax) return false;
+  }
+  return true;
 };
+
 L.requiresMet = function (st, q) {
 var r = q.requires || {};
 if (r.all) {
@@ -410,7 +417,8 @@ s.failed = false;
 s.branch = branch;
 s.stage = q.stages.length;
 if (q.unlock) q.unlock.forEach(function (u) { st.flags['unlock_' + u] = true; });
-L.weight(st, rw.thread || branch, 5, q.title + ' — ' + q.branch[branch]);
+/* регистрационная форма не двигает нить: у single-дел нет морального выбора */
+if (!q.single) L.weight(st, rw.thread || branch, 5, q.title + ' — ' + q.branch[branch]);
 if (rw.item) L.grantItem(st, rw.item);
 if (rw.fact) L.addFact(st, rw.fact);
 if (rw.facts) rw.facts.forEach(function (f) { L.addFact(st, f); });

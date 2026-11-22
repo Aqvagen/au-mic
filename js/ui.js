@@ -36,10 +36,14 @@ toastTimer = setTimeout(function () { toastEl.classList.remove('is-show'); }, 22
 
 /* ---------- HUD ---------- */
 UI.setHudVisible = function (on) {
-var h = UI.$('hud');
-if (!h) return;
-h.classList.toggle('is-on', !!on);
-h.classList.toggle('is-min', !on);
+  var h = UI.$('hud');
+  if (!h) return;
+  var s = G.AU && G.AU.state && G.AU.state.S;
+  /* MaskLink — интерфейс станции: до выдачи идентификатора HUD не поднят */
+  var masked = !s || !s.flags || s.flags.mask_active !== false;
+  on = !!on && masked;
+  h.classList.toggle('is-on', on);
+  h.classList.toggle('is-min', !on);
 };
 UI.setWhere = function (text) {
 var n = UI.$('hudWhere');

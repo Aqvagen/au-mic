@@ -33,32 +33,37 @@ D.REP_NAMES = D.REP_NAMES || {};
 D.REP_START = D.REP_START || {};
 }
 function empty(o) { return !o || !Object.keys(o).length; }
+
 function adopt() {
-if (empty(D.QUESTS) && G.AU_QUESTS) D.QUESTS = G.AU_QUESTS;
-if (empty(D.DIALOGUES) && G.AU_DIALOGUES) D.DIALOGUES = G.AU_DIALOGUES;
-normalize();
+  if (empty(D.QUESTS) && G.AU_QUESTS) D.QUESTS = G.AU_QUESTS;
+  if (empty(D.DIALOGUES) && G.AU_DIALOGUES) D.DIALOGUES = G.AU_DIALOGUES;
+  normalize();
+  if (!D.CODEX && G.AU_CODEX) D.CODEX = G.AU_CODEX;
+  if (!D.QUESTS.q_arrival && G.AU_ARRIVAL_ATTACH) G.AU_ARRIVAL_ATTACH();
 }
 function loadScript(src) {
-return new Promise(function (res) {
-var s = document.createElement('script');
-s.src = src;
-s.async = false;
-s.onload = function () { res(true); };
-s.onerror = function () { res(false); };
-document.head.appendChild(s);
-});
+  return new Promise(function (res) {
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = false;
+    s.onload = function () { res(true); };
+    s.onerror = function () { res(false); };
+    document.head.appendChild(s);
+  });
 }
-/* если файл не подключён в index.html — грузим его сами */
 function ensureData() {
-adopt();
-var need = [];
-if (empty(D.QUESTS)) need.push('js/data-quests.js');
-if (empty(D.DIALOGUES)) need.push('js/data-dialogues.js');
-if (!need.length) return Promise.resolve();
-return need.reduce(function (p, src) {
-return p.then(function () { return loadScript(src); });
-}, Promise.resolve()).then(adopt, adopt);
+  adopt();
+  var need = [];
+  if (empty(D.QUESTS)) need.push('js/data-quests.js');
+  if (empty(D.DIALOGUES)) need.push('js/data-dialogues.js');
+  if (!D.CODEX) need.push('js/data-codex.js');
+  if (!D.QUESTS.q_arrival || !D.DIALOGUES.dlg_cross) need.push('js/data-arrival.js');
+  if (!need.length) return Promise.resolve();
+  return need.reduce(function (p, src) {
+    return p.then(function () { return loadScript(src); });
+  }, Promise.resolve()).then(adopt, adopt);
 }
+
 function missingBlocks() {
 var miss = [];
 if (empty(D.HEROES)) miss.push('js/data.js');
@@ -137,6 +142,24 @@ return rawSave(st, slot);
 AU.applyEffects = function (eff) {
 var s = ST.S;
 if (!eff) return false;
+  var flagsBefore = !!(s.flags && s.flags.mask_active);
+  if (eff.flag) {
+    (Array.isArray(eff.flag) ? eff.flag : [eff.flag]).forEach(function (f) { s.flags[f] = true; });
+  }
+  if (eff.flags) eff.flags.forEach(function (f) { s.flags[f] = true; });
+  if (eff.unflag) {
+    (Array.isArray(eff.unflag) ? eff.unflag : [eff.unflag]).forEach(function (f) { delete s.flags[f]; });
+  }
+  if (eff.maskLevel && G.Codex) G.Codex.setLevel(eff.maskLevel);
+  if (eff.codex && G.Codex) {
+    (Array.isArray(eff.codex) ? eff.codex : [eff.codex]).forEach(function (id) { G.Codex.grant(id); });
+  }
+  if (!flagsBefore && s.flags.mask_active) {
+    UI.toast('MaskLink активирован · интерфейс загружен');
+    UI.flare();
+    UI.setHudVisible(true);
+    UI.updateHud(s, L, D);
+  }
 if (eff.startQuest && L.startQuest(s, eff.startQuest)) UI.toast('Взято дело: ' + D.QUESTS[eff.startQuest].title);
 if (eff.advanceQuest && L.advanceQuest(s, eff.advanceQuest)) UI.toast('Этап: ' + D.QUESTS[eff.advanceQuest].title);
 if (eff.setStage) L.setQuestStage(s, eff.setStage.quest, eff.setStage.stage);
@@ -991,6 +1014,77 @@ res(ok ? true : 'журнал стёрт таймером');
 }, 420);
 });
 }],
+    ['прибытие: локация, диалог и дело на месте', function () {
+      var l = (D.LOCATIONS || []).filter(function (x) { return x.id === 'loc_arrival'; })[0];
+      if (!l) return 'нет loc_arrival';
+      if (!D.DIALOGUES.dlg_cross) return 'нет dlg_cross';
+      if (!D.QUESTS.q_arrival) return 'нет q_arrival';
+      if (!l.intro || !l.intro.noa || !l.intro.selin || !l.intro.garik) return 'нет прозы сцены';
+      return D.QUESTS.q_arrival.single === true ? true : 'q_arrival должен быть single';
+    }],
+    ['прибытие: HUD скрыт до MaskLink', function () {
+      fresh();
+      ST.S.flags.mask_active = false;
+      ST.loc = 'loc_arrival';
+      S.showLocation('loc_arrival');
+      var h = document.getElementById('hud');
+      return !h.classList.contains('is-on') ? true : 'HUD поднят без идентификатора';
+    }],
+    ['прибытие: проза сцены渲染ится по герою', function () {
+      var n = document.querySelectorAll('.prose__p').length;
+      return n >= 5 ? true : 'абзацев ' + n;
+    }],
+    ['прибытие: регистрация за всех трёх героев', function () {
+      var err = null;
+      ['noa', 'selin', 'garik'].forEach(function (h) {
+        if (err) return;
+        fresh(h);
+        ST.S.flags.mask_active = false;
+        L.startQuest(ST.S, 'q_arrival');
+        ST.loc = 'loc_arrival';
+        var guard = 0;
+        while (!ST.S.flags.cross_done && guard++ < 14) {
+          S.openDialogue('dlg_cross');
+          var opts = Array.prototype.slice.call(document.querySelectorAll('[data-test^="opt"]'))
+            .filter(function (b) { return !b.disabled && b.textContent.indexOf('Отойти') < 0; });
+          if (!opts.length) { err = h + ': нет доступных реплик на шаге ' + guard; return; }
+          fire(opts[0]);
+        }
+        if (!ST.S.flags.mask_active) { err = h + ': MaskLink не выдан'; return; }
+        if (ST.S.quests.q_arrival.stage !== 2) { err = h + ': этап ' + ST.S.quests.q_arrival.stage; return; }
+        var hud = document.getElementById('hud');
+        if (!hud.classList.contains('is-on')) err = h + ': HUD не поднялся после выдачи';
+      });
+      return err || true;
+    }],
+    ['прибытие: чтение GrailOS закрывает дело без веса нити', function () {
+      fresh('noa');
+      ST.S.flags.mask_active = false;
+      L.startQuest(ST.S, 'q_arrival');
+      ST.loc = 'loc_arrival';
+      L.setQuestStage(ST.S, 'q_arrival', 2);
+      ST.S.flags.mask_active = true;
+      var w0 = ST.S.weights.A + ST.S.weights.B + ST.S.weights.C;
+      S.showCodex('cx_life');
+      var done = ST.S.quests.q_arrival.done === true;
+      var w1 = ST.S.weights.A + ST.S.weights.B + ST.S.weights.C;
+      if (ST.screen === 'codex') { UI.player.close(); S.showLocation('loc_arrival'); }
+      if (!done) return 'дело не закрылось чтением';
+      return w1 === w0 ? true : 'нить сдвинулась на ' + (w1 - w0);
+    }],
+    ['прибытие: дверь в «Кокон» только после регистрации', function () {
+      fresh();
+      ST.S.flags.mask_active = false;
+      L.startQuest(ST.S, 'q_arrival');
+      ST.loc = 'loc_arrival';
+      S.showLocation('loc_arrival');
+      var locked = document.querySelector('.entry--locked');
+      ST.S.quests.q_arrival.done = true;
+      ST.S.flags.mask_active = true;
+      S.showLocation('loc_arrival');
+      var open = document.querySelector('.entry--exit');
+      return locked && open ? true : 'состояния двери не различаются';
+    }],
 ['нить и финал', function () {
 var st = L.create('noa');
 st.quests.q_final.started = true;
@@ -1059,6 +1153,20 @@ var what = h.slice(4);
 UI.setHudVisible(true);
 UI.updateHud(ST.S, L, D);
 if (what === 'heroes') S.showHeroes();
+else if (what === 'arrival') {
+      ST.S.flags.mask_active = false;
+      L.startQuest(ST.S, 'q_arrival');
+      ST.loc = 'loc_arrival';
+      S.showLocation('loc_arrival');
+}
+else if (what === 'cross') {
+      ST.S.flags.mask_active = false;
+      L.startQuest(ST.S, 'q_arrival');
+      ST.loc = 'loc_arrival';
+      S.openDialogue('dlg_cross');
+}
+else if (what === 'codex') { S.showHub(); S.showCodex(); }
+
 else if (what === 'hub') S.showHub();
 else if (what === 'loc') { ST.loc = 'loc_zhil'; S.showLocation('loc_zhil'); }
 else if (what === 'pause') { S.showHub(); setTimeout(function () { AU.showPause(); }, 350); }
